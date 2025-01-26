@@ -76,6 +76,7 @@ python -m torch.distributed.launch --nproc_per_node=8 --master_port=25622 tools/
 # Single GPU testing
 python tools/test.py configs/occupancy/mv-occ_8xb1_sliceformer-occ-80class.py work_dirs/sliceocc/epoch_24.pth
 
+```
 
 ### Multi-View Occupancy Prediction
 
