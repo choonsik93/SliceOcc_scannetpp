@@ -17,7 +17,7 @@
 
 In this paper, we present a new vertical slice representation that divides the scene along the vertical axis and projects spatial point features onto the nearest pair of parallel planes. To utilize these slice features, we propose SliceOcc, an RGB camera-based model specifically tailored for indoor 3D semantic occupancy prediction.
 
-[demo](https://tai-wang.github.io/embodiedscan).
+
 
 ## 📚 Getting Started
 
