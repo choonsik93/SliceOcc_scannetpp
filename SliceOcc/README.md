@@ -1,7 +1,7 @@
 # SliceOcc: Indoor 3D Semantic Occupancy Prediction with Vertical Slice Representation
 
 <p align="center">
-  [![U7tX.md.jpeg](https://i.imgs.ovh/2025/01/26/U7tX.md.jpeg)](https://imgloc.com/image/U7tX)
+  ![Teaser Image](https://i.imgs.ovh/2025/01/26/U7tX.md.jpeg)
 </p>
 
 ## 📋 Contents
