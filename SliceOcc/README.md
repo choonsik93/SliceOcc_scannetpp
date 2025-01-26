@@ -1,7 +1,7 @@
 # SliceOcc: Indoor 3D Semantic Occupancy Prediction with Vertical Slice Representation
 
 <div style="text-align: center;">
-    <img src="https://i.imgs.ovh/2025/01/26/U7tX.md.jpeg" alt="Dialogue_Teaser" width=100% >
+    <img src="https://i.imgs.ovh/2025/01/26/U7tX.jpeg" alt="Dialogue_Teaser" width=100% >
 </div>
 
 ## 📋 Contents
