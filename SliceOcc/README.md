@@ -77,7 +77,7 @@ python -m torch.distributed.launch --nproc_per_node=8 --master_port=25622 tools/
 python tools/test.py configs/occupancy/mv-occ_8xb1_sliceformer-occ-80class.py work_dirs/sliceocc/epoch_24.pth
 
 
-#### Multi-View Occupancy Prediction
+### Multi-View Occupancy Prediction
 
 | Method | Input | mIoU | 
 |:------:|:-----:|:----:|
@@ -87,48 +87,3 @@ python tools/test.py configs/occupancy/mv-occ_8xb1_sliceformer-occ-80class.py wo
 
 
 
-## 🔗 Citation
-
-If you find our work helpful, please cite:
-
-
-
-Please kindly cite the original datasets involved in our work. BibTex entries are provided below.
-
-<details><summary>Dataset BibTex</summary>
-
-```bibtex
-@inproceedings{wang2023embodiedscan,
-    title={EmbodiedScan: A Holistic Multi-Modal 3D Perception Suite Towards Embodied AI},
-    author={Wang, Tai and Mao, Xiaohan and Zhu, Chenming and Xu, Runsen and Lyu, Ruiyuan and Li, Peisen and Chen, Xiao and Zhang, Wenwei and Chen, Kai and Xue, Tianfan and Liu, Xihui and Lu, Cewu and Lin, Dahua and Pang, Jiangmiao},
-    year={2024},
-    booktitle={IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
-}
-```
-
-```BibTex
-@inproceedings{dai2017scannet,
-  title={ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes},
-  author={Dai, Angela and Chang, Angel X. and Savva, Manolis and Halber, Maciej and Funkhouser, Thomas and Nie{\ss}ner, Matthias},
-  booktitle = {Proceedings IEEE Computer Vision and Pattern Recognition (CVPR)},
-  year = {2017}
-}
-```
-
-```BibTex
-@inproceedings{Wald2019RIO,
-  title={RIO: 3D Object Instance Re-Localization in Changing Indoor Environments},
-  author={Johanna Wald, Armen Avetisyan, Nassir Navab, Federico Tombari, Matthias Niessner},
-  booktitle={Proceedings IEEE International Conference on Computer Vision (ICCV)},
-  year = {2019}
-}
-```
-
-```BibTex
-@article{Matterport3D,
-  title={{Matterport3D}: Learning from {RGB-D} Data in Indoor Environments},
-  author={Chang, Angel and Dai, Angela and Funkhouser, Thomas and Halber, Maciej and Niessner, Matthias and Savva, Manolis and Song, Shuran and Zeng, Andy and Zhang, Yinda},
-  journal={International Conference on 3D Vision (3DV)},
-  year={2017}
-}
-```
