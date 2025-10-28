@@ -49,4 +49,6 @@ run:
 	--net host --gpus all --privileged --name sliceocc sliceocc:latest /bin/bash
 
 # export SCANNET_PATH=/media/sequor/PortableSSD/scannetpp && make run
+# export SCANNET_PATH=/data/scannetpp && make run
 # python tools/train.py configs/occupancy/mv-occ_8xb1_sliceformer-occ-11class.py --work-dir=work_dirs/sliceocc
+# python -m torch.distributed.launch --nproc_per_node=8 --master_port=25622 tools/train.py configs/occupancy/mv-occ_8xb1_sliceformer-occ-80class.py --launcher='pytorch' --work-dir=work_dirs/sliceocc
