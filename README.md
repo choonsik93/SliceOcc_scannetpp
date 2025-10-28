@@ -1,9 +1,5 @@
 # SliceOcc: Indoor 3D Semantic Occupancy Prediction with Vertical Slice Representation
 
-<div style="text-align: center;">
-    <img src="https://i.imgs.ovh/2025/01/26/U7tX.jpeg" alt="Dialogue_Teaser" width=100% >
-</div>
-
 ## 📋 Contents
 
 1. [Getting Started](#📚-getting-started)
@@ -11,7 +7,7 @@
 
 ## 🏠 About
 
-Scannetpp dataset을 이용가능하도록 한 Sliceocc source 코드 확장
+This repository extends the original SliceOcc codebase to run on the **ScanNet++** dataset.
 
 ## 📚 Getting Started
 
@@ -39,7 +35,7 @@ Scannetpp dataset을 이용가능하도록 한 Sliceocc source 코드 확장
 
 #### Steps:
 
-1. **Download the scannetpp raw data from [link]**
+1. **Download the ScanNet++ raw data from [ScanNet++ dataset](https://scannetpp.mlsg.cit.tum.de/scannetpp/)**
 
 2. **Create the scannetpp occupancy files**:
     ```bash
