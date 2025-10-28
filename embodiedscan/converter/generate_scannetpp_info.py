@@ -3,7 +3,7 @@ import json
 import torch
 import numpy as np
 from tqdm import tqdm
-from .scannet_io import get_scannet_to_uniscenes
+from .scannetpp_io import get_scannet_to_uniscenes
 from typing import List, Tuple, Dict
 import pickle
 

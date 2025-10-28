@@ -205,7 +205,8 @@ class ScannetppDataset(BaseDataset):
 
         occ_filename = os.path.join(self.data_prefix.get('img_path', ''),
                                     'occupancy', info['sample_idx'], 'occupancy.npy')
-        mask_filename = None
+        mask_filename = os.path.join(self.data_prefix.get('img_path', ''),
+                                    'occupancy', info['sample_idx'], 'visible_occupancy.pkl')
                                     
         gt_occ = np.load(occ_filename)
         # Remap note: already done in pre-processing
@@ -224,20 +225,22 @@ class ScannetppDataset(BaseDataset):
         occ_distb = self.compute_height_distribution(shaped_occ_gt, 81, 16)
         self.occ_distribution += occ_distb
         '''
+        
+        ann_info['visible_occupancy_masks'] = []
+        occ_masks = mmengine.load(mask_filename)
+        for i in range(len(info['images'])):
+            if info['images'][i]["img_path"].split('/')[-1] != occ_masks[i]['img_path']:
+                raise ValueError('Mismatch between image path and occ mask path!')
+            ann_info['visible_occupancy_masks'].append(
+                occ_masks[i]['visible_occupancy'])
 
         # Debug
+        # grid = tuple(self.metainfo.get('occ_grid_shape', (40, 40, 16)))
         # ann_info['visible_occupancy_masks'] = []
-        # occ_masks = mmengine.load(mask_filename)
         # for i in range(len(info['images'])):
         #     ann_info['visible_occupancy_masks'].append(
-        #         occ_masks[i]['visible_occupancy'])
-
-        grid = tuple(self.metainfo.get('occ_grid_shape', (40, 40, 16)))
-        ann_info['visible_occupancy_masks'] = []
-        for i in range(len(info['images'])):
-            ann_info['visible_occupancy_masks'].append(
-                np.ones(grid, dtype=bool))
-            #ann_info['visible_occupancy_masks'] = [np.ones(grid, dtype=bool) for _ in range(num_imgs)]
+        #         np.ones(grid, dtype=bool))
+        #     #ann_info['visible_occupancy_masks'] = [np.ones(grid, dtype=bool) for _ in range(num_imgs)]
 
         ann_info['gt_bboxes_3d'] = self.box_type_3d(
             ann_info['gt_bboxes_3d'],

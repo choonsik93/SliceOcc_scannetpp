@@ -177,10 +177,20 @@ class ImVoxelOccHead(BaseModule):
                 gt = occ_multiscale_supervision(gt_occupancy, ratio,
                                                 occ_preds[i].shape,
                                                 pooled_masks)
-                loss_occ_i = (criterion(pred, gt.long()) +
-                              sem_scal_loss(pred, gt.long()) +
-                              geo_scal_loss(pred, gt.long()))
-                loss_occ_i = loss_occ_i * ((0.5)**i)
+                
+                B = gt.size(0)
+                has_valid = (gt != 255).reshape(B, -1).any(dim=1)
+                valid_batch_idx = has_valid.nonzero(as_tuple=False).squeeze(1)
+
+                if valid_batch_idx.numel() == 0:
+                    loss_occ_i = torch.Tensor([0.]).to(pred.device)
+                else:
+                    pred = pred.index_select(0, valid_batch_idx)  # (Nb, C, W, H, D)
+                    gt = gt.index_select(0, valid_batch_idx)    # (Nb, W, H, D)
+                    loss_occ_i = (criterion(pred, gt.long()) +
+                                sem_scal_loss(pred, gt.long()) +
+                                geo_scal_loss(pred, gt.long()))
+                    loss_occ_i = loss_occ_i * ((0.5)**i)
                 loss_dict['loss_occ_{}'.format(i)] = loss_occ_i
 
         return loss_dict
