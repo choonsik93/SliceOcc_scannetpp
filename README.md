@@ -39,12 +39,14 @@ Scannetpp dataset을 이용가능하도록 한 Sliceocc source 코드 확장
 
 #### Steps:
 
-1. **Create the scannetpp occupancy files**:
+1. **Download the scannetpp raw data from [link]**
+
+2. **Create the scannetpp occupancy files**:
     ```bash
     python -m embodiedscan.converter.generate_scannetpp_occupancy
     ```
 
-2. **Create the scannetpp train and valid infos**:
+1. **Create the scannetpp train and valid infos**:
     ```bash
     python -m embodiedscan.converter.generate_scannetpp_info
     ```
