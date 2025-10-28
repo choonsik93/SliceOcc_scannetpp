@@ -34,16 +34,16 @@ build-image:
 	-e DISPLAY=$DISPLAY \
 	--name=sliceocc \
 	--ipc=host sliceocc:latest
-	docker exec -it sliceocc sh -c "cd /home/appuser/SliceOcc/SliceOcc/embodiedscan/models/head/localagg/; python setup.py build_ext --inplace"
+	docker exec -it sliceocc sh -c "cd /home/appuser/SliceOcc/embodiedscan/models/head/localagg/; python setup.py build_ext --inplace"
 	docker commit sliceocc sliceocc:latest
 	docker stop sliceocc
 
 run:
 	docker run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$(DISPLAY) -e USER=$(USER) \
 	-e runtime=nvidia -e NVIDIA_DRIVER_CAPABILITIES=all -e NVIDIA_VISIBLE_DEVICES=all \
-	-e PYTHONPATH=/home/appuser/SliceOcc/SliceOcc \
+	-e PYTHONPATH=/home/appuser/SliceOcc \
 	-v "${PWD}":/home/appuser/SliceOcc \
-	-w /home/appuser/SliceOcc/SliceOcc \
+	-w /home/appuser/SliceOcc \
 	-v "${SCANNET_PATH}":/data \
 	--shm-size 128G \
 	--net host --gpus all --privileged --name sliceocc sliceocc:latest /bin/bash

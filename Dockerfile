@@ -24,7 +24,7 @@ RUN printf "numpy==1.26.4\n" > /etc/pip-constraints.txt
 ENV PIP_CONSTRAINT=/etc/pip-constraints.txt
 ENV PIP_UPGRADE_STRATEGY=only-if-needed
 
-RUN pip install open3d==0.18.0 numba
+RUN pip install open3d==0.18.0
 RUN pip install spconv-cu118
 
 RUN pip install torch-scatter -f https://data.pyg.org/whl/torch-2.1.0+cu118.html
@@ -41,6 +41,6 @@ RUN pip install --no-cache-dir --no-build-isolation git+https://github.com/mit-h
 RUN pip install --no-cache-dir --no-build-isolation "git+https://github.com/facebookresearch/pytorch3d.git"
 RUN pip install --no-cache-dir --no-build-isolation -U git+https://github.com/NVIDIA/MinkowskiEngine --no-deps
 
-RUN pip install ftfy regex
+RUN pip install ftfy regex numba
 
 RUN apt-get install -y python3-tk

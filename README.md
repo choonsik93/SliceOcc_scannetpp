@@ -6,55 +6,48 @@
 
 ## 📋 Contents
 
-1. [About](#🏠-about)
-2. [Getting Started](#📚-getting-started)
-3. [Model and Benchmark](#📦-model-and-benchmark)
-4. [Citation](#🔗-citation)
+1. [Getting Started](#📚-getting-started)
+2. [Model and Benchmark](#📦-model-and-benchmark)
 
 ## 🏠 About
 
-3D semantic occupancy prediction is a crucial task in visual perception, as it requires the simultaneous comprehension of both scene geometry and semantics. It plays a crucial role in understanding 3D scenes and has great potential for various applications, such as robotic vision perception and autonomous driving.
-
-In this paper, we present a new vertical slice representation that divides the scene along the vertical axis and projects spatial point features onto the nearest pair of parallel planes. To utilize these slice features, we propose SliceOcc, an RGB camera-based model specifically tailored for indoor 3D semantic occupancy prediction.
-
-
+Scannetpp dataset을 이용가능하도록 한 Sliceocc source 코드 확장
 
 ## 📚 Getting Started
 
 ### Installation
 
-We test our codes under the following environment:
-
-- Ubuntu 20.04
-- NVIDIA Driver: 535.54.03
-- CUDA 12.1
-- Python 3.8.18
-- PyTorch 1.11.0+cu113
-- PyTorch3D 0.7.2
-
 #### Steps:
 
 1. **Clone the repository**:
     ```bash
-    git clone https://github.com/NorthSummer/SliceOcc.git
-    cd SliceOcc
+    git clone https://github.com/choonsik93/SliceOcc_scannetpp.git
+    cd SliceOcc_scannetpp
     ```
 
-2. **Create an environment and install PyTorch**:
+2. **Create an Docker image**:
     ```bash
-    conda create -n embodiedscan python=3.8 -y
-    conda activate embodiedscan
-    conda install pytorch==1.11.0 torchvision==0.12.0 torchaudio==0.11.0 cudatoolkit=11.3 -c pytorch
+    make build-image
     ```
 
-3. **Install SliceOcc**:
+3. **Run the installed Docker image**:
     ```bash
-    python install.py all  # Install all dependencies
+    export SCANNET_PATH=/path/to/your/scannetpp/data/folder && make run
     ```
 
 ### Data Preparation
 
-Please refer to the [EmbodiedScan data preparation guide](https://github.com/OpenRobotLab/EmbodiedScan/tree/main/data) for downloading and organization.
+#### Steps:
+
+1. **Create the scannetpp occupancy files**:
+    ```bash
+    python -m embodiedscan.converter.generate_scannetpp_occupancy
+    ```
+
+2. **Create the scannetpp train and valid infos**:
+    ```bash
+    python -m embodiedscan.converter.generate_scannetpp_info
+    ```
 
 ## 📦 Model and Benchmark
 
@@ -66,7 +59,7 @@ Example commands:
 
 **Single GPU training**:
 ```bash
-python tools/train.py configs/occupancy/mv-occ_8xb1_sliceformer-occ-80class.py --work-dir=work_dirs/sliceocc
+tools/train.py configs/occupancy/mv-occ_8xb1_sliceformer-occ-80class.py --work-dir=work_dirs/sliceocc
 
 # Multiple GPU training
 python -m torch.distributed.launch --nproc_per_node=8 --master_port=25622 tools/train.py configs/occupancy/mv-occ_8xb1_sliceformer-occ-80class.py --launcher='pytorch' --work-dir=work_dirs/sliceocc

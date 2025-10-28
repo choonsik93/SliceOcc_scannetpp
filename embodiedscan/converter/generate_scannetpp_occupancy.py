@@ -224,6 +224,12 @@ def generate_scannetpp_occupancy(data_root_dir, pointcloud_dir, scannetpp_to_nyu
 
         output_dir = os.path.join(data_root_dir, "occupancy", scene_id)
         os.makedirs(output_dir, exist_ok=True)
+
+        if os.path.exists(os.path.join(output_dir, "occupancy.npy")) and \
+              os.path.exists(os.path.join(output_dir, "axis_align_matrix.npy")) and \
+                os.path.exists(os.path.join(output_dir, "visible_occupancy.pkl")):
+            continue
+
         # load point cloud 
         pointcloud_data = torch.load(os.path.join(pointcloud_dir, scene_id + ".pth"), weights_only=False)
         coords = pointcloud_data["sampled_coords"].astype(np.float32)
