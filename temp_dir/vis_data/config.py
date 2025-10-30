@@ -99,6 +99,7 @@ model = dict(
         ],
         num_classes=12,
         type='ImVoxelOccHead',
+        up_ratio=4,
         use_semantic=True,
         volume_h=240,
         volume_w=240,
