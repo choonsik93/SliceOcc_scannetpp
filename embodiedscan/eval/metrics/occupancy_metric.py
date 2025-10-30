@@ -119,7 +119,7 @@ class OccupancyMetric(BaseMetric):
         all batches.
 
         Args:
-            size (int): Length of the entire validation dataset. When batch
+            size (int): Length of the entire validation dataset. When ebatch
                 size > 1, the dataloader may pad some data samples to make
                 sure all ranks have the same length of dataset slice. The
                 ``collect_results`` function will drop the padded data based on

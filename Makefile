@@ -50,3 +50,5 @@ run:
 
 # export SCANNET_PATH=/media/sequor/PortableSSD/scannetpp && make run
 # python tools/train.py configs/occupancy/mv-occ_8xb1_sliceformer-occ-11class.py --work-dir=work_dirs/sliceocc
+# python tools/train.py configs/occupancy/mv-occ_8xb1_sliceformer-occ2x-11class.py --work-dir=work_dirs/sliceocc
+# python tools/test.py configs/occupancy//mv-occ_8xb1_sliceformer-occ-11class.py work_dirs/sliceocc/epoch_32.pth

@@ -13,6 +13,10 @@ NYU_FLOOR_ID = 2
 NYU_WALL_ID  = 3
 NYU_CEIL_ID  = 1
 IGNORE_ID    = 255
+PONINTCLOUD_RANGE = [-6.0, -6.0, -0.78, 6.0, 6.0, 3.22]
+VOXEL_DIMS = [240, 240, 80]
+VOXEL_SIZE = 0.05
+
 
 def _rotation_from_a_to_b(a, b):
     """Return 3x3 rotation matrix that rotates vector a to vector b."""
@@ -187,8 +191,64 @@ os.makedirs(os.path.join(data_root_dir, "occupancy"), exist_ok=True)
 
 scannetpp_to_nyu = get_scannet_to_uniscenes(data_root_dir)
 
+def compute_scene_extent_with_plot(data_root_dir, pointcloud_dir, scannetpp_to_nyu, scene_id_list, split="train",
+                                   pointcloud_range=[-12.8, -12.8, -0.78, 12.8, 12.8, 3.22],
+                                   voxel_dims=[512, 512, 80], voxel_size=0.05):
+    
+    import matplotlib.pyplot as plt
+    
+    x_min, y_min, z_min, x_max, y_max, z_max = pointcloud_range
+    nx, ny, nz = voxel_dims
+    count = 0
+    all_extents = []
+
+    for scene_id in tqdm(scene_id_list, desc=f"Computing extents ({split})"):
+        output_dir = os.path.join(data_root_dir, "occupancy_2x", scene_id)
+        os.makedirs(output_dir, exist_ok=True)
+        # load point cloud 
+        pointcloud_data = torch.load(os.path.join(pointcloud_dir, scene_id + ".pth"), weights_only=False)
+        coords = pointcloud_data["sampled_coords"].astype(np.float32)
+        scene_extent = np.max(coords, axis=0) - np.min(coords, axis=0)
+        all_extents.append(scene_extent)
+
+        if scene_extent[0] > (x_max - x_min) or scene_extent[1] > (y_max - y_min) or scene_extent[2] > (z_max - z_min):
+            count += 1
+
+    all_extents = np.array(all_extents)
+    print(f"Total {count} scenes exceed the defined range.")
+    print(f"Mean extent: {np.mean(all_extents, axis=0)}")
+    print(f"Max extent:  {np.max(all_extents, axis=0)}")
+    print(f"Min extent:  {np.min(all_extents, axis=0)}")
+
+    # --- 그래프 1: 각 축별 히스토그램 ---
+    fig, axs = plt.subplots(1, 3, figsize=(15, 4))
+    axs[0].hist(all_extents[:, 0], bins=30, color='r', alpha=0.7)
+    axs[0].set_title("X extent")
+    axs[1].hist(all_extents[:, 1], bins=30, color='g', alpha=0.7)
+    axs[1].set_title("Y extent")
+    axs[2].hist(all_extents[:, 2], bins=30, color='b', alpha=0.7)
+    axs[2].set_title("Z extent")
+    plt.suptitle(f"Scene extent distribution ({split})")
+    plt.tight_layout()
+    plt.show()
+
+    # --- 그래프 2: 3D scatter ---
+    fig = plt.figure(figsize=(6, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(all_extents[:, 0], all_extents[:, 1], all_extents[:, 2], alpha=0.7, c='orange')
+    ax.set_xlabel("Extent X (m)")
+    ax.set_ylabel("Extent Y (m)")
+    ax.set_zlabel("Extent Z (m)")
+    ax.set_title(f"Scene extent scatter ({split})")
+    plt.show()
+
+    # --- 저장 ---
+    save_path = os.path.join(f"scene_extent_{split}.npy")
+    np.save(save_path, all_extents)
+    print(f"Saved extent data to {save_path}")
+
 def compute_scene_extent(data_root_dir, pointcloud_dir, scannetpp_to_nyu, scene_id_list, split="train",
-                                 pointcloud_range=[-3.2, -3.2, -0.78, 3.2, 3.2, 1.78], voxel_dims=[40, 40, 16], voxel_size=0.16):
+                                 pointcloud_range=[-12.8, -12.8, -0.78, 12.8, 12.8, 3.22], voxel_dims=[512, 512, 80], voxel_size=0.05):
     
     x_min, y_min, z_min, x_max, y_max, z_max = pointcloud_range
     nx, ny, nz = voxel_dims
@@ -200,20 +260,13 @@ def compute_scene_extent(data_root_dir, pointcloud_dir, scannetpp_to_nyu, scene_
         # load point cloud 
         pointcloud_data = torch.load(os.path.join(pointcloud_dir, scene_id + ".pth"), weights_only=False)
         coords = pointcloud_data["sampled_coords"].astype(np.float32)
-        labels = pointcloud_data["sampled_labels"].astype(np.int32)
-        org_labels = labels.copy()
-        nyu_labels = scannetpp_to_nyu[labels]
-        nyu_labels[org_labels == -100] = 255  # mark unknown
-        objects = pointcloud_data["sampled_instance_anno_id"].astype(np.int32)
-        scene_center = np.median(coords, axis=0)
-        scene_center[2] = np.min(coords[:, 2]) + 0.5  # set z center to be near the floor
         scene_extent = np.max(coords, axis=0) - np.min(coords, axis=0)
         if scene_extent[0] > (x_max - x_min) or scene_extent[1] > (y_max - y_min) or scene_extent[2] > (z_max - z_min):
             count += 1
     print(f"Total {count} scenes exceed the defined range.")
 
 def generate_scannetpp_occupancy(data_root_dir, pointcloud_dir, scannetpp_to_nyu, scene_id_list, split="train",
-                                 pointcloud_range=[-3.2, -3.2, -0.78, 3.2, 3.2, 1.78], voxel_dims=[40, 40, 16], voxel_size=0.16, debug=False):
+                                 pointcloud_range=PONINTCLOUD_RANGE, voxel_dims=VOXEL_DIMS, voxel_size=VOXEL_SIZE, debug=False):
     
     x_min, y_min, z_min, x_max, y_max, z_max = pointcloud_range
     nx, ny, nz = voxel_dims
@@ -240,7 +293,7 @@ def generate_scannetpp_occupancy(data_root_dir, pointcloud_dir, scannetpp_to_nyu
         objects = pointcloud_data["sampled_instance_anno_id"].astype(np.int32)
         scene_center = np.median(coords, axis=0)
         scene_extent = np.max(coords, axis=0) - np.min(coords, axis=0)
-        print("Scene center:", scene_center, "extent:", scene_extent, np.min(coords, axis=0), np.max(coords, axis=0))
+        #print("Scene center:", scene_center, "extent:", scene_extent, np.min(coords, axis=0), np.max(coords, axis=0))
 
         # 1) estimate R_up from floor
         R_up, ok_up = _estimate_R_up_from_floor(coords, nyu_labels, floor_id=NYU_FLOOR_ID)
@@ -258,7 +311,7 @@ def generate_scannetpp_occupancy(data_root_dir, pointcloud_dir, scannetpp_to_nyu
         coords_h = np.concatenate([coords.astype(np.float32), np.ones((coords.shape[0], 1), dtype=np.float32)], axis=1)
         coords = (axis_align_matrix @ coords_h.T).T[:, :3].astype(np.float32)
 
-        scene_offset = np.median(coords, axis=0)
+        scene_offset = (np.max(coords, axis=0) + np.min(coords, axis=0)) / 2.0
         scene_offset[2] = np.min(coords[:, 2]) + 0.5  # raise floor to near z_min
         axis_align_matrix[:3, 3] = -scene_offset
 
@@ -282,7 +335,8 @@ def generate_scannetpp_occupancy(data_root_dir, pointcloud_dir, scannetpp_to_nyu
                 cam2occ = axis_align_matrix @ cam2global
                 o3d_axis.transform(cam2occ)
                 o3d_cam_axis_list.append(o3d_axis)
-            o3d.visualization.draw_geometries([o3d_pcd] + o3d_cam_axis_list)
+            o3d_global_axis = o3d.geometry.TriangleMesh.create_coordinate_frame(size=6.0, origin=[0,0,0])
+            o3d.visualization.draw_geometries([o3d_pcd, o3d_global_axis] + o3d_cam_axis_list)
 
         in_range = (
             (coords[:, 0] >= x_min) & (coords[:, 0] < x_max) &
@@ -342,15 +396,17 @@ def generate_scannetpp_occupancy(data_root_dir, pointcloud_dir, scannetpp_to_nyu
             o3d_global_pcd = o3d.geometry.PointCloud()
             o3d_global_pcd.points = o3d.utility.Vector3dVector((occ[:, :3].astype(np.float32) + 0.5) * voxel_size + np.array(pointcloud_range[:3])[None, :])
             o3d_global_voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(o3d_global_pcd, voxel_size=voxel_size)
-            o3d.visualization.draw_geometries([o3d_global_voxel_grid] + o3d_axis_list)
+            o3d_global_axis = o3d.geometry.TriangleMesh.create_coordinate_frame(size=6.0, origin=[0,0,0])
+            o3d.visualization.draw_geometries([o3d_global_voxel_grid, o3d_global_axis] + o3d_axis_list)
 
-        occ_dense = np.zeros((nx, ny, nz), dtype=np.bool_)
-        occ_dense[occ[:,0], occ[:,1], occ[:,2]] = True
+        # 4x downsampled occupancy for visible mask computation
+        occ_dense = np.zeros((nx // 4, ny // 4, nz // 4), dtype=np.bool_)
+        occ_dense[occ[:, 0] // 4, occ[:,1] // 4, occ[:,2] // 4] = True
 
         visible_occupancy_list = []
 
         origin = np.array([x_min, y_min, z_min], dtype=np.float64)
-        voxel_size_3d = np.array([voxel_size, voxel_size, voxel_size], dtype=np.float64)
+        voxel_size_3d = np.array([voxel_size * 4, voxel_size * 4, voxel_size * 4], dtype=np.float64)
         for idx in range(len(train_camera_to_worlds)):
             filename = train_file_names[idx]
             cam2global = train_camera_to_worlds[idx]
@@ -370,9 +426,9 @@ def generate_scannetpp_occupancy(data_root_dir, pointcloud_dir, scannetpp_to_nyu
                 o3d_global_voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(o3d_global_pcd, voxel_size=voxel_size)
                 ijk = np.argwhere(visible_mask)
                 o3d_pcd = o3d.geometry.PointCloud()
-                o3d_pcd.points = o3d.utility.Vector3dVector((ijk.astype(np.float32) + 0.5) * voxel_size + np.array(pointcloud_range[:3])[None, :])
+                o3d_pcd.points = o3d.utility.Vector3dVector((ijk.astype(np.float32) + 0.5) * voxel_size_3d[0] + np.array(pointcloud_range[:3])[None, :])
                 o3d_pcd.paint_uniform_color([1, 0, 0])
-                o3d_voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(o3d_pcd, voxel_size=voxel_size)
+                o3d_voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(o3d_pcd, voxel_size=voxel_size_3d[0])
 
                 o3d_axis = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.2, origin=[0,0,0])
                 o3d_axis.transform(cam2occ)
@@ -399,9 +455,10 @@ def generate_scannetpp_occupancy(data_root_dir, pointcloud_dir, scannetpp_to_nyu
             pickle.dump(visible_occupancy_list, f, protocol=pickle.HIGHEST_PROTOCOL)
         # print(f"wrote {occ.shape[0]} voxels -> {save_path}")
 
-#generate_scannetpp_occupancy(data_root_dir, pointcloud_dir, scannetpp_to_nyu, train_scene_ids, split="train")
-compute_scene_extent(data_root_dir, pointcloud_dir, scannetpp_to_nyu, train_scene_ids, split="train")
-#generate_scannetpp_occupancy(data_root_dir, pointcloud_dir, scannetpp_to_nyu, val_scene_ids, split="val")
-compute_scene_extent(data_root_dir, pointcloud_dir, scannetpp_to_nyu, val_scene_ids, split="val")
+#compute_scene_extent_with_plot(data_root_dir, pointcloud_dir, scannetpp_to_nyu, train_scene_ids + val_scene_ids, split="all")
+generate_scannetpp_occupancy(data_root_dir, pointcloud_dir, scannetpp_to_nyu, train_scene_ids, split="train")
+#compute_scene_extent(data_root_dir, pointcloud_dir, scannetpp_to_nyu, train_scene_ids, split="train")
+generate_scannetpp_occupancy(data_root_dir, pointcloud_dir, scannetpp_to_nyu, val_scene_ids, split="val")
+#compute_scene_extent(data_root_dir, pointcloud_dir, scannetpp_to_nyu, val_scene_ids, split="val")
 
 
