@@ -133,7 +133,7 @@ class ImVoxelOccHead(BaseModule):
         if self.up_ratio != -1:
             up_occ_feat = self.up_occ[0](mlvl_feats[0])
             occ_pred = self.up_occ[1](up_occ_feat)
-            occ_preds.append(occ_pred)
+            occ_preds = [occ_pred] + occ_preds
 
         return occ_preds
 
@@ -169,7 +169,7 @@ class ImVoxelOccHead(BaseModule):
         """
         batch_input_metas = [
             data_samples.metainfo for data_samples in batch_data_samples
-        ]
+        ]  
         occ_preds = self.forward(x, batch_input_metas)
 
         gt_occupancy = [
