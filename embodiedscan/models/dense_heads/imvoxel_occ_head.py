@@ -38,6 +38,7 @@ class ImVoxelOccHead(BaseModule):
                  volume_z=16,
                  in_channels=128,
                  use_semantic=True,
+                 up_ratio=-1,
                  **kwargs):
         super(ImVoxelOccHead, self).__init__()
         self.num_classes = num_classes
@@ -46,6 +47,7 @@ class ImVoxelOccHead(BaseModule):
         self.volume_z = volume_z
         self.in_channels = in_channels
         self.use_semantic = use_semantic
+        self.up_ratio = up_ratio
 
         self._init_layers()
 
@@ -69,6 +71,35 @@ class ImVoxelOccHead(BaseModule):
                                        stride=1,
                                        padding=0)
                 self.occ.append(occ)
+
+        if self.up_ratio != -1:
+            self.up_occ = nn.ModuleList()
+            deconv_cfg = dict(type='ConvTranspose3d', bias=False)
+            deconv_occ = build_conv_layer(
+                deconv_cfg,
+                in_channels=self.in_channels[-1],
+                out_channels=self.in_channels[-1],
+                kernel_size=self.up_ratio,
+                stride=self.up_ratio,
+                padding=0,
+            )
+            self.up_occ.append(deconv_occ)
+            if self.use_semantic:
+                occ = build_conv_layer(conv_cfg,
+                                       in_channels=self.in_channels[-1],
+                                       out_channels=self.num_classes,
+                                       kernel_size=1,
+                                       stride=1,
+                                       padding=0)
+                self.up_occ.append(occ)
+            else:
+                occ = build_conv_layer(conv_cfg,
+                                       in_channels=self.in_channels[-1],
+                                       out_channels=1,
+                                       kernel_size=1,
+                                       stride=1,
+                                       padding=0)
+                self.up_occ.append(occ)
 
         # for i in range(len(self.in_channels - 1)):
         #     deconv_cfg = dict(type='ConvTranspose3d', bias=False)
@@ -97,7 +128,11 @@ class ImVoxelOccHead(BaseModule):
         occ_preds = []
         for i in range(len(mlvl_feats)):
             occ_pred = self.occ[i](mlvl_feats[i])
-            print
+            occ_preds.append(occ_pred)
+
+        if self.up_ratio != -1:
+            up_occ_feat = self.up_occ[0](mlvl_feats[-1])
+            occ_pred = self.up_occ[1](up_occ_feat)
             occ_preds.append(occ_pred)
 
         return occ_preds
