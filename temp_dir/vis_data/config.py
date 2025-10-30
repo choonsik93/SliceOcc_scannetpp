@@ -1,6 +1,6 @@
 _dim_ = 256
 _ffn_dim_ = 512
-_num_cams_ = 1
+_num_cams_ = 20
 _num_levels_ = 4
 _pos_dim_ = 128
 anchor_z_ = 32
@@ -43,7 +43,7 @@ env_cfg = dict(
     dist_cfg=dict(backend='nccl'),
     mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0))
 find_unused_parameters = True
-launcher = 'none'
+launcher = 'pytorch'
 load_from = None
 log_level = 'INFO'
 log_processor = dict(by_epoch=True, type='LogProcessor', window_size=50)
@@ -326,7 +326,7 @@ model = dict(
                             tpv_z=16,
                             type='TPVMSDeformableAttention3D'),
                         embed_dims=256,
-                        num_cams=1,
+                        num_cams=20,
                         num_slices=[
                             16,
                             0,
@@ -357,7 +357,7 @@ model = dict(
                 ),
                 type='TPVFormerLayer'),
             type='SliceOccEncoder'),
-        num_cams=1,
+        num_cams=20,
         num_feature_levels=4,
         pc_range=[
             -3.2,
@@ -618,7 +618,7 @@ test_dataloader = dict(
                 with_occupancy=True,
                 with_visible_occupancy_masks=True),
             dict(
-                n_images=1,
+                n_images=20,
                 transforms=[
                     dict(backend_args=None, type='LoadImageFromFile'),
                     dict(keep_ratio=False, scale=(
@@ -650,7 +650,7 @@ test_pipeline = [
         with_occupancy=True,
         with_visible_occupancy_masks=True),
     dict(
-        n_images=1,
+        n_images=20,
         transforms=[
             dict(backend_args=None, type='LoadImageFromFile'),
             dict(keep_ratio=False, scale=(
@@ -714,7 +714,7 @@ train_dataloader = dict(
                 with_occupancy=True,
                 with_visible_occupancy_masks=True),
             dict(
-                n_images=1,
+                n_images=20,
                 transforms=[
                     dict(backend_args=None, type='LoadImageFromFile'),
                     dict(keep_ratio=False, scale=(
@@ -744,7 +744,7 @@ train_pipeline = [
         with_occupancy=True,
         with_visible_occupancy_masks=True),
     dict(
-        n_images=1,
+        n_images=20,
         transforms=[
             dict(backend_args=None, type='LoadImageFromFile'),
             dict(keep_ratio=False, scale=(
@@ -805,7 +805,7 @@ val_dataloader = dict(
                 with_occupancy=True,
                 with_visible_occupancy_masks=True),
             dict(
-                n_images=1,
+                n_images=20,
                 transforms=[
                     dict(backend_args=None, type='LoadImageFromFile'),
                     dict(keep_ratio=False, scale=(
