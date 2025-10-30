@@ -70,6 +70,20 @@ class ImVoxelOccHead(BaseModule):
                                        padding=0)
                 self.occ.append(occ)
 
+        # for i in range(len(self.in_channels - 1)):
+        #     deconv_cfg = dict(type='ConvTranspose3d', bias=False)
+        #     up_stride = self.volume_h[i + 1] // self.volume_h[i]
+        #     deconv_occ = build_conv_layer(
+        #         deconv_cfg,
+        #         in_channels=self.in_channels[-1],
+        #         out_channels=self.in_channels[-1],
+        #         kernel_size=up_stride,
+        #         stride=up_stride,
+        #         padding=0,
+        #     )
+        #     print(deconv_occ)
+
+
     def forward(self, mlvl_feats, input_metas):
         """Forward function.
 
@@ -83,6 +97,7 @@ class ImVoxelOccHead(BaseModule):
         occ_preds = []
         for i in range(len(mlvl_feats)):
             occ_pred = self.occ[i](mlvl_feats[i])
+            print
             occ_preds.append(occ_pred)
 
         return occ_preds
@@ -138,7 +153,7 @@ class ImVoxelOccHead(BaseModule):
             loss_dict = {}
             for i in range(len(occ_preds)):
                 pred = occ_preds[i][:, 0]
-                ratio = 2**i
+                ratio = self.volume_w // pred.shape[1]
                 # downsample occ_masks accordingly
                 if gt_occupancy_masks is not None:
                     pooling = nn.MaxPool3d(ratio, stride=ratio)
@@ -163,7 +178,7 @@ class ImVoxelOccHead(BaseModule):
 
             for i in range(len(occ_preds)):
                 pred = occ_preds[i]
-                ratio = 2**i
+                ratio = self.volume_w // pred.shape[2]
                 # downsample occ_masks accordingly
                 if gt_occupancy_masks is not None:
                     # a little hack: use maxpool to achieve downsample
@@ -177,20 +192,25 @@ class ImVoxelOccHead(BaseModule):
                 gt = occ_multiscale_supervision(gt_occupancy, ratio,
                                                 occ_preds[i].shape,
                                                 pooled_masks)
-                
-                B = gt.size(0)
-                has_valid = (gt != 255).reshape(B, -1).any(dim=1)
-                valid_batch_idx = has_valid.nonzero(as_tuple=False).squeeze(1)
-
-                if valid_batch_idx.numel() == 0:
-                    loss_occ_i = torch.Tensor([0.]).to(pred.device)
-                else:
-                    pred = pred.index_select(0, valid_batch_idx)  # (Nb, C, W, H, D)
-                    gt = gt.index_select(0, valid_batch_idx)    # (Nb, W, H, D)
-                    loss_occ_i = (criterion(pred, gt.long()) +
-                                sem_scal_loss(pred, gt.long()) +
-                                geo_scal_loss(pred, gt.long()))
-                    loss_occ_i = loss_occ_i * ((0.5)**i)
+                loss_occ_i = (criterion(pred, gt.long()) +
+                              sem_scal_loss(pred, gt.long()) +
+                              geo_scal_loss(pred, gt.long()))
+                loss_occ_i = loss_occ_i * ((0.5)**i)
                 loss_dict['loss_occ_{}'.format(i)] = loss_occ_i
+                
+                # B = gt.size(0)
+                # has_valid = (gt != 255).reshape(B, -1).any(dim=1)
+                # valid_batch_idx = has_valid.nonzero(as_tuple=False).squeeze(1)
+
+                # if valid_batch_idx.numel() == 0:
+                #     loss_occ_i = torch.Tensor([0.]).to(pred.device)
+                # else:
+                #     pred = pred.index_select(0, valid_batch_idx)  # (Nb, C, W, H, D)
+                #     gt = gt.index_select(0, valid_batch_idx)    # (Nb, W, H, D)
+                #     loss_occ_i = (criterion(pred, gt.long()) +
+                #                 sem_scal_loss(pred, gt.long()) +
+                #                 geo_scal_loss(pred, gt.long()))
+                #     loss_occ_i = loss_occ_i * ((0.5)**i)
+                # loss_dict['loss_occ_{}'.format(i)] = loss_occ_i
 
         return loss_dict

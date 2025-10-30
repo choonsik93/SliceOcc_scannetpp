@@ -5,26 +5,28 @@ n_points = 100000
 
 # origin for multi-view scannet is set to 0.5
 # -1.28~1.28 -> -0.78~1.78
-point_cloud_range = [-3.2, -3.2, -0.78, 3.2, 3.2, 1.78]
-cam_point_range = [-3.2, -3.2, -1.28, 3.2, 3.2, 1.28]
-
-    
+point_cloud_range = [-6.0, -6.0, -0.78, 6.0, 6.0, 3.22]
+cam_point_range = [-6.0, -6.0, -0.78, 6.0, 6.0, 3.22]
+# voxel_dims = [240, 240, 80]
+# voxel_size = 0.05
 
 prior_generator = dict(type='AlignedAnchor3DRangeGenerator',
-                       ranges=[[-3.2, -3.2, -1.28, 3.2, 3.2, 1.28]],
+                       ranges=[[-6.0, -6.0, -0.78, 6.0, 6.0, 3.22]],
                        rotations=[.0])
 
-
+out_h = 240
+out_w = 240
+out_z = 80
 _dim_ = 256
 _pos_dim_ = _dim_//2
 _ffn_dim_ = _dim_*2
 _num_levels_ = 4
-_num_cams_ = 20
-tpv_h_ = 40 
-tpv_w_ = 40 
-tpv_z_ = 16
-anchor_z_ = 32 #16
-num_slices_z = 16
+_num_cams_ = 1
+tpv_h_ = 60
+tpv_w_ = 60
+tpv_z_ = 20
+anchor_z_ = 40 #16
+num_slices_z = 20
 num_slices_w = 0
 num_slices_h = 0
 num_slices_ = [num_slices_z, num_slices_w, num_slices_h]
@@ -138,19 +140,22 @@ model = dict(
                  n_blocks=[1, 1, 1]),
     bbox_head=dict(
         type='ImVoxelOccHead',
-        volume_h=[20, 10, 5],
-        volume_w=[20, 10, 5],
-        volume_z=[8, 4, 2],
+        # volume_h=[out_w, out_w // 2, out_w // 4],
+        # volume_w=[out_h, out_h // 2, out_h // 4],
+        # volume_z=[out_z, out_z // 2, out_z // 4],
+        volume_h=out_w,
+        volume_w=out_h,
+        volume_z=out_z,
         num_classes=12,  # TO Be changed
         in_channels=[128, 128, 128], #[128, 128, 128],
         use_semantic=True),
     prior_generator=prior_generator,
-    n_voxels=[40, 40, 16],  
+    n_voxels=[out_w, out_h, out_z],  
     n_anchors= [tpv_h_, tpv_w_, anchor_z_], #[40, 40, 16], #32
     coord_type='DEPTH',
 )
 
-dataset_type = 'ScannetppDataset'
+dataset_type = 'Scannetpp2xDataset'
 data_root = '/data'
 class_names = ('ceiling', 'floor', 'wall', 'window', 'chair', 'bed', 'sofa',
                'table', 'tv', 'furniture', 'objects')
@@ -163,7 +168,7 @@ backend_args = None
 train_pipeline = [
     dict(type='LoadAnnotations3D',
          with_occupancy=True,
-         with_visible_occupancy_masks=True),
+         with_visible_occupancy_masks=False),
     dict(
         type='MultiViewPipeline',
         n_images=_num_cams_,
@@ -171,14 +176,13 @@ train_pipeline = [
             dict(type='LoadImageFromFile', backend_args=backend_args),
             dict(type='Resize', scale=(480, 480), keep_ratio=False)
         ]),
-    dict(type='ConstructMultiViewMasks'),
     dict(type='Pack3DDetInputs', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d', 'gt_occupancy'])
 ]
 
 test_pipeline = [
     dict(type='LoadAnnotations3D',
          with_occupancy=True,
-         with_visible_occupancy_masks=True),
+         with_visible_occupancy_masks=False),
     dict(
         type='MultiViewPipeline',
         n_images=_num_cams_,
@@ -186,7 +190,6 @@ test_pipeline = [
             dict(type='LoadImageFromFile', backend_args=backend_args),
             dict(type='Resize', scale=(480, 480), keep_ratio=False)
         ]),
-    dict(type='ConstructMultiViewMasks'),
     dict(type='Pack3DDetInputs', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d', 'gt_occupancy'])
 ]
 
@@ -196,7 +199,7 @@ train_dataloader = dict(batch_size=1,
                         sampler=dict(type='DefaultSampler', shuffle=True),
                         dataset=dict(type=dataset_type,
                                      data_root=data_root,
-                                     ann_file='scannetpp_infos_train.pkl',
+                                     ann_file='scannetpp_infos_2x_train.pkl',
                                      pipeline=train_pipeline,
                                      test_mode=False,
                                      filter_empty_gt=True,
@@ -210,7 +213,7 @@ val_dataloader = dict(batch_size=1,
                       sampler=dict(type='DefaultSampler', shuffle=False),
                       dataset=dict(type=dataset_type,
                                    data_root=data_root,
-                                   ann_file='scannetpp_infos_val.pkl',
+                                   ann_file='scannetpp_infos_2x_val.pkl',
                                    pipeline=test_pipeline,
                                    test_mode=True,
                                    filter_empty_gt=True,

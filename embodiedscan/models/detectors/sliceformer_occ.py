@@ -359,11 +359,9 @@ class DenseSliceOccPredictor(BaseModel):
         predictions = self.add_occupancy_to_data_sample(
             batch_data_samples, results_list)
 
-        '''
         from embodiedscan.visualizer import EmbodiedScanBaseVisualizer
         visualizer = EmbodiedScanBaseVisualizer.get_current_instance()
         visualizer.visualize_occupancy(predictions)
-        '''
         
         return predictions
 

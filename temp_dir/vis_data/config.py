@@ -3,15 +3,15 @@ _ffn_dim_ = 512
 _num_cams_ = 20
 _num_levels_ = 4
 _pos_dim_ = 128
-anchor_z_ = 32
+anchor_z_ = 40
 backend_args = None
 cam_point_range = [
-    -3.2,
-    -3.2,
-    -1.28,
-    3.2,
-    3.2,
-    1.28,
+    -6.0,
+    -6.0,
+    -0.78,
+    6.0,
+    6.0,
+    3.22,
 ]
 class_names = (
     'ceiling',
@@ -30,7 +30,7 @@ custom_hooks = [
     dict(after_iter=True, type='EmptyCacheHook'),
 ]
 data_root = '/data'
-dataset_type = 'ScannetppDataset'
+dataset_type = 'Scannetpp2xDataset'
 default_hooks = dict(
     checkpoint=dict(interval=32, max_keep_ckpts=32, type='CheckpointHook'),
     logger=dict(interval=50, type='LoggerHook'),
@@ -100,21 +100,9 @@ model = dict(
         num_classes=12,
         type='ImVoxelOccHead',
         use_semantic=True,
-        volume_h=[
-            20,
-            10,
-            5,
-        ],
-        volume_w=[
-            20,
-            10,
-            5,
-        ],
-        volume_z=[
-            8,
-            4,
-            2,
-        ]),
+        volume_h=240,
+        volume_w=240,
+        volume_z=80),
     coord_type='DEPTH',
     data_preprocessor=dict(
         bgr_to_rgb=True,
@@ -131,14 +119,14 @@ model = dict(
         ],
         type='Det3DDataPreprocessor'),
     n_anchors=[
+        60,
+        60,
         40,
-        40,
-        32,
     ],
     n_voxels=[
-        40,
-        40,
-        16,
+        240,
+        240,
+        80,
     ],
     neck=dict(
         in_channels=[
@@ -160,22 +148,22 @@ model = dict(
         out_channels=128,
         type='IndoorImVoxelNeck'),
     point_cloud_range=[
-        -3.2,
-        -3.2,
+        -6.0,
+        -6.0,
         -0.78,
-        3.2,
-        3.2,
-        1.78,
+        6.0,
+        6.0,
+        3.22,
     ],
     prior_generator=dict(
         ranges=[
             [
-                -3.2,
-                -3.2,
-                -1.28,
-                3.2,
-                3.2,
-                1.28,
+                -6.0,
+                -6.0,
+                -0.78,
+                6.0,
+                6.0,
+                3.22,
             ],
         ],
         rotations=[
@@ -219,33 +207,41 @@ model = dict(
                 4,
                 4,
                 4,
+                4,
+                4,
+                4,
+                4,
+                4,
+                4,
+                4,
+                4,
             ],
             pc_range=[
-                -3.2,
-                -3.2,
-                -1.28,
-                3.2,
-                3.2,
-                1.28,
+                -6.0,
+                -6.0,
+                -0.78,
+                6.0,
+                6.0,
+                3.22,
             ],
             return_intermediate=False,
-            slice_h=40,
+            slice_h=60,
             slice_num=[
-                16,
+                20,
                 0,
                 0,
             ],
-            slice_w=40,
-            slice_z=16,
+            slice_w=60,
+            slice_z=20,
             transformerlayers=dict(
                 attn_cfgs=[
                     dict(
                         embed_dims=256,
                         num_levels=4,
-                        num_slices=16,
-                        tpv_h=40,
-                        tpv_w=40,
-                        tpv_z=16,
+                        num_slices=20,
+                        tpv_h=60,
+                        tpv_w=60,
+                        tpv_z=20,
                         type='TPVCrossViewHybridAttention'),
                     dict(
                         deformable_attention=dict(
@@ -285,8 +281,16 @@ model = dict(
                                 8,
                                 8,
                                 8,
+                                8,
+                                8,
+                                8,
+                                8,
+                                8,
+                                8,
+                                8,
+                                8,
                             ],
-                            num_slices=16,
+                            num_slices=20,
                             num_z_anchors=[
                                 4,
                                 4,
@@ -320,29 +324,37 @@ model = dict(
                                 4,
                                 4,
                                 4,
+                                4,
+                                4,
+                                4,
+                                4,
+                                4,
+                                4,
+                                4,
+                                4,
                             ],
-                            tpv_h=40,
-                            tpv_w=40,
-                            tpv_z=16,
+                            tpv_h=60,
+                            tpv_w=60,
+                            tpv_z=20,
                             type='TPVMSDeformableAttention3D'),
                         embed_dims=256,
                         num_cams=20,
                         num_slices=[
-                            16,
+                            20,
                             0,
                             0,
                         ],
                         pc_range=[
-                            -3.2,
-                            -3.2,
-                            -1.28,
-                            3.2,
-                            3.2,
-                            1.28,
+                            -6.0,
+                            -6.0,
+                            -0.78,
+                            6.0,
+                            6.0,
+                            3.22,
                         ],
-                        tpv_h=40,
-                        tpv_w=40,
-                        tpv_z=16,
+                        tpv_h=60,
+                        tpv_w=60,
+                        tpv_z=20,
                         type='TPVImageCrossAttention'),
                 ],
                 feedforward_channels=512,
@@ -360,26 +372,26 @@ model = dict(
         num_cams=20,
         num_feature_levels=4,
         pc_range=[
-            -3.2,
-            -3.2,
-            -1.28,
-            3.2,
-            3.2,
-            1.28,
+            -6.0,
+            -6.0,
+            -0.78,
+            6.0,
+            6.0,
+            3.22,
         ],
         positional_encoding=dict(
-            col_num_embed=40,
+            col_num_embed=60,
             num_feats=128,
-            row_num_embed=40,
+            row_num_embed=60,
             type='LearnedPositionalEncoding'),
-        slice_h=40,
+        slice_h=60,
         slice_num=[
-            16,
+            20,
             0,
             0,
         ],
-        slice_w=40,
-        slice_z=32,
+        slice_w=60,
+        slice_z=40,
         type='SliceOccHead',
         use_semantic=True),
     type='DenseSliceOccPredictor',
@@ -420,9 +432,25 @@ num_points = [
     8,
     8,
     8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
 ]
 num_points_h = []
 num_points_in_pillar = [
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
     4,
     4,
     4,
@@ -491,6 +519,14 @@ num_points_in_pillar_z = [
     4,
     4,
     4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
 ]
 num_points_w = []
 num_points_z = [
@@ -526,19 +562,30 @@ num_points_z = [
     8,
     8,
     8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
 ]
 num_slices_ = [
-    16,
+    20,
     0,
     0,
 ]
 num_slices_h = 0
 num_slices_w = 0
-num_slices_z = 16
+num_slices_z = 20
 optim_wrapper = dict(
     clip_grad=dict(max_norm=35.0, norm_type=2),
     optimizer=dict(lr=0.0001, type='AdamW', weight_decay=0.01),
     type='OptimWrapper')
+out_h = 240
+out_w = 240
+out_z = 80
 param_scheduler = dict(
     begin=0,
     by_epoch=True,
@@ -550,22 +597,22 @@ param_scheduler = dict(
     ],
     type='MultiStepLR')
 point_cloud_range = [
-    -3.2,
-    -3.2,
+    -6.0,
+    -6.0,
     -0.78,
-    3.2,
-    3.2,
-    1.78,
+    6.0,
+    6.0,
+    3.22,
 ]
 prior_generator = dict(
     ranges=[
         [
-            -3.2,
-            -3.2,
-            -1.28,
-            3.2,
-            3.2,
-            1.28,
+            -6.0,
+            -6.0,
+            -0.78,
+            6.0,
+            6.0,
+            3.22,
         ],
     ],
     rotations=[
@@ -580,7 +627,7 @@ test_cfg = dict(type='TestLoop')
 test_dataloader = dict(
     batch_size=1,
     dataset=dict(
-        ann_file='scannetpp_infos_val.pkl',
+        ann_file='scannetpp_infos_2x_val.pkl',
         box_type_3d='Euler-Depth',
         data_root='/data',
         filter_empty_gt=True,
@@ -616,7 +663,7 @@ test_dataloader = dict(
             dict(
                 type='LoadAnnotations3D',
                 with_occupancy=True,
-                with_visible_occupancy_masks=True),
+                with_visible_occupancy_masks=False),
             dict(
                 n_images=20,
                 transforms=[
@@ -627,7 +674,6 @@ test_dataloader = dict(
                     ), type='Resize'),
                 ],
                 type='MultiViewPipeline'),
-            dict(type='ConstructMultiViewMasks'),
             dict(
                 keys=[
                     'img',
@@ -638,7 +684,7 @@ test_dataloader = dict(
                 type='Pack3DDetInputs'),
         ],
         test_mode=True,
-        type='ScannetppDataset'),
+        type='Scannetpp2xDataset'),
     drop_last=False,
     num_workers=1,
     persistent_workers=True,
@@ -648,7 +694,7 @@ test_pipeline = [
     dict(
         type='LoadAnnotations3D',
         with_occupancy=True,
-        with_visible_occupancy_masks=True),
+        with_visible_occupancy_masks=False),
     dict(
         n_images=20,
         transforms=[
@@ -659,7 +705,6 @@ test_pipeline = [
             ), type='Resize'),
         ],
         type='MultiViewPipeline'),
-    dict(type='ConstructMultiViewMasks'),
     dict(
         keys=[
             'img',
@@ -669,14 +714,14 @@ test_pipeline = [
         ],
         type='Pack3DDetInputs'),
 ]
-tpv_h_ = 40
-tpv_w_ = 40
-tpv_z_ = 16
+tpv_h_ = 60
+tpv_w_ = 60
+tpv_z_ = 20
 train_cfg = dict(max_epochs=32, type='EpochBasedTrainLoop', val_interval=8)
 train_dataloader = dict(
     batch_size=1,
     dataset=dict(
-        ann_file='scannetpp_infos_train.pkl',
+        ann_file='scannetpp_infos_2x_train.pkl',
         box_type_3d='Euler-Depth',
         data_root='/data',
         filter_empty_gt=True,
@@ -712,7 +757,7 @@ train_dataloader = dict(
             dict(
                 type='LoadAnnotations3D',
                 with_occupancy=True,
-                with_visible_occupancy_masks=True),
+                with_visible_occupancy_masks=False),
             dict(
                 n_images=20,
                 transforms=[
@@ -723,7 +768,6 @@ train_dataloader = dict(
                     ), type='Resize'),
                 ],
                 type='MultiViewPipeline'),
-            dict(type='ConstructMultiViewMasks'),
             dict(
                 keys=[
                     'img',
@@ -734,7 +778,7 @@ train_dataloader = dict(
                 type='Pack3DDetInputs'),
         ],
         test_mode=False,
-        type='ScannetppDataset'),
+        type='Scannetpp2xDataset'),
     num_workers=1,
     persistent_workers=True,
     sampler=dict(shuffle=True, type='DefaultSampler'))
@@ -742,7 +786,7 @@ train_pipeline = [
     dict(
         type='LoadAnnotations3D',
         with_occupancy=True,
-        with_visible_occupancy_masks=True),
+        with_visible_occupancy_masks=False),
     dict(
         n_images=20,
         transforms=[
@@ -753,7 +797,6 @@ train_pipeline = [
             ), type='Resize'),
         ],
         type='MultiViewPipeline'),
-    dict(type='ConstructMultiViewMasks'),
     dict(
         keys=[
             'img',
@@ -767,7 +810,7 @@ val_cfg = dict(type='ValLoop')
 val_dataloader = dict(
     batch_size=1,
     dataset=dict(
-        ann_file='scannetpp_infos_val.pkl',
+        ann_file='scannetpp_infos_2x_val.pkl',
         box_type_3d='Euler-Depth',
         data_root='/data',
         filter_empty_gt=True,
@@ -803,7 +846,7 @@ val_dataloader = dict(
             dict(
                 type='LoadAnnotations3D',
                 with_occupancy=True,
-                with_visible_occupancy_masks=True),
+                with_visible_occupancy_masks=False),
             dict(
                 n_images=20,
                 transforms=[
@@ -814,7 +857,6 @@ val_dataloader = dict(
                     ), type='Resize'),
                 ],
                 type='MultiViewPipeline'),
-            dict(type='ConstructMultiViewMasks'),
             dict(
                 keys=[
                     'img',
@@ -825,7 +867,7 @@ val_dataloader = dict(
                 type='Pack3DDetInputs'),
         ],
         test_mode=True,
-        type='ScannetppDataset'),
+        type='Scannetpp2xDataset'),
     drop_last=False,
     num_workers=1,
     persistent_workers=True,

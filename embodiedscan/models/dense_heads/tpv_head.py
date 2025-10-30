@@ -141,9 +141,10 @@ class SliceOccHead(BaseModule):
             spatial_shapes=spatial_shapes,
             level_start_index=level_start_index,
             img_metas=img_metas,
-        )    
+        )
 
-        slice_z = 16 // self.slice_num[0]
+        #slice_z = 16 // self.slice_num[0]
+        slice_z = (self.slice_z // 2) // self.slice_num[0]
         occ_slices_z = []              
         voxel_heights = [split_size] * self.slice_num[0]
 
@@ -173,15 +174,13 @@ class SliceOccHead(BaseModule):
             slice_floor = slice_floor.permute(0, 2, 1).reshape(bs, c, self.slice_h, self.slice_w)
             slice_celing = slice_celing.permute(0, 2, 1).reshape(bs, c, self.slice_h, self.slice_w)
             stacked_features = torch.stack([slice_floor, slice_celing], dim=-1)
-            interpolated_features = torch.nn.functional.interpolate(stacked_features, size=(40,40,slice_z), mode='trilinear', align_corners=False)
+            interpolated_features = torch.nn.functional.interpolate(stacked_features, size=(self.slice_h, self.slice_w, slice_z), mode='trilinear', align_corners=False)
             occ_slices_z.append(interpolated_features)
 
         slice_occ_z = torch.cat(occ_slices_z, dim=4)
         slice_occ = slice_occ_z #+ img_volume_feats
 
         return slice_occ
-    
-
 
 
 def adjust_sequence_to_target(sequence, target_sum):

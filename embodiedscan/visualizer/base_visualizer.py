@@ -12,6 +12,8 @@ try:
 except ImportError:
     o3d = None
 
+import numpy as np
+
 '''
 from mayavi import mlab
 import mayavi
@@ -80,6 +82,8 @@ class EmbodiedScanBaseVisualizer(Visualizer):
             return img_path.split('sequence')[0]
         if 'matterport_color_images' in img_path:
             return img_path.split('matterport_color_images')[0]
+        if 'undistorted_images' in img_path:
+            return img_path.split('undistorted_images')[0]
         raise ValueError('Custom datasets are not supported.')
 
     @staticmethod
@@ -166,32 +170,102 @@ class EmbodiedScanBaseVisualizer(Visualizer):
 
         o3d.visualization.draw_geometries([mesh, frame] + boxes)
     
-    
-
-    '''
     @master_only
     def visualize_occupancy(self,
-                        data_samples,
-                        voxel_size=[0.2,0.2,0.2],  # voxel size in the real world
-                        ):
+                            data_samples,
+                            voxel_size=[0.16, 0.16, 0.16],  # voxel size in the real world
+                            ):
 
         assert len(data_samples) == 1
         data_sample = data_samples[0]
 
         metainfo = data_sample.metainfo
         
-        root_dir = self.get_root_dir(metainfo['img_path'][0])
-        print(root_dir, metainfo['scan_id'])
-        ply_file = self.get_ply(root_dir, metainfo['scan_id'])
-        axis_align_matrix = metainfo['axis_align_matrix']
+        #root_dir = self.get_root_dir(metainfo['img_path'][0])
+        # ply_file = self.get_ply(root_dir, metainfo['scan_id'])
+        # axis_align_matrix = metainfo['axis_align_matrix']
 
         # Compute the voxels coordinates
         voxels = data_sample.pred_occupancy.cpu().detach()
 
+        COLORS = np.array([
+            [ 22, 191, 206, 255], # 00 free
+            [214,  38,  40, 255], # 01 ceiling
+            [ 43, 160,  43, 255], # 02 floor
+            [158, 216, 229, 255], # 03 wall
+            [114, 158, 206, 255], # 04 window
+            [204, 204,  91, 255], # 05 chair
+            [255, 186, 119, 255], # 06 bed
+            [147, 102, 188, 255], # 07 sofa
+            [ 30, 119, 181, 255], # 08 table
+            [188, 188,  33, 255], # 09 tvs
+            [255, 127,  12, 255], # 10 furniture
+            [196, 175, 214, 255], # 11 objects
+            [153, 153, 153, 255], # 12 unknown
+        ]).astype(np.uint8)
+
+        nonzero_indices = np.argwhere(voxels.numpy() != 0)
+        nonzero_labels = voxels.numpy()[nonzero_indices[:, 0], nonzero_indices[:, 1], nonzero_indices[:, 2]]
+        occ_colors = COLORS[nonzero_labels.astype(np.int32), :3].astype(np.float32) / 255.0
+        o3d_pcd = o3d.geometry.PointCloud()
+        o3d_pcd.points = o3d.utility.Vector3dVector(nonzero_indices.astype(np.float32))
+        o3d_pcd.colors = o3d.utility.Vector3dVector(occ_colors)
+        o3d_voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(o3d_pcd, voxel_size=1)
+        #o3d_axis = o3d.geometry.TriangleMesh.create_coordinate_frame(size=40, origin=[0,0,0])
+        #o3d.visualization.draw_geometries([o3d_voxel_grid, o3d_axis])
+
+        def save_voxelgrid_png(o3d_voxel_grid,
+                            out_path,
+                            width=1600,
+                            height=1200,
+                            bg_color=(0, 0, 0),
+                            front=(0.5, -0.5, -1.0),
+                            lookat=None,
+                            up=(0, -1, 0),
+                            zoom=0.7):
+            # 비가시 모드 창 생성
+            vis = o3d.visualization.Visualizer()
+            vis.create_window(visible=False, width=width, height=height)
+            vis.add_geometry(o3d_voxel_grid)
+
+            # 렌더 옵션
+            opt = vis.get_render_option()
+            opt.background_color = np.asarray(bg_color, dtype=np.float64)
+
+            eye    = np.array([20, 20, -60], dtype=np.float64)
+            lookat = np.array([20, 20, 0], dtype=np.float64)  # 정면(아래)으로 볼 지점
+            front  = (lookat - eye); front = front / np.linalg.norm(front)  # (0,0,-1)로 됨
+            up     = np.array([0.0, 1.0, 0.0], dtype=np.float64)  # 필요시 [0,-1,0]로 바꿔보면 느낌 달라짐
+
+            # 카메라 뷰 세팅 (대충 중앙 바라보게)
+            ctr = vis.get_view_control()
+            if lookat is None:
+                aabb = o3d_voxel_grid.get_axis_aligned_bounding_box()
+                lookat = aabb.get_center()
+            ctr.set_front(front)
+            ctr.set_up(up)
+            ctr.set_lookat(lookat)
+            ctr.set_zoom(zoom)
+
+            # 렌더 & 캡처
+            vis.poll_events()
+            vis.update_renderer()
+
+            #os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            vis.capture_screen_image(out_path, do_render=True)
+            vis.destroy_window()
+
+        # 사용 예시
+        scan_id = str(metainfo['scan_id'])  # 파일명에 쓰자
+        #out_path = f"./outputs/occ_voxel_{scan_id}.png"
+        out_path = f"occ_voxel_{scan_id}.png"
+        save_voxelgrid_png(o3d_voxel_grid, out_path)
+        print("saved ->", out_path)
+
+        return
 
         shaped_voxels = voxels.unsqueeze(0).unsqueeze(0)
 
-        
         #gt = data_sample.gt_occupancy.cpu().detach().unsqueeze(0)
         #gt = occ_multiscale_supervision(gt, 1,
         #                                shaped_voxels.shape,
@@ -199,7 +273,6 @@ class EmbodiedScanBaseVisualizer(Visualizer):
         #gt = gt.squeeze(0)
         #mask = (gt > 0) & (gt < 81)
         #assert voxels.shape == gt.shape
-        
 
         grid_coords = get_grid_coords(
             [voxels.shape[0], voxels.shape[1], voxels.shape[2]], voxel_size
@@ -219,82 +292,82 @@ class EmbodiedScanBaseVisualizer(Visualizer):
         fov_voxels = fov_grid_coords[
             (fov_grid_coords[:, 3] > 0) & (fov_grid_coords[:, 3] < 12)
         ]
-
-
-        figure = mlab.figure(size=(2560, 1440), bgcolor=(1, 1, 1))
-        # Draw occupied inside FOV voxels
         voxel_size = sum(voxel_size) / 3
- 
-        
-        plt_plot_fov = mlab.points3d(
-            fov_voxels[:, 1],
-            fov_voxels[:, 0],
-            fov_voxels[:, 2],
-            fov_voxels[:, 3],
-            colormap="viridis",
-            scale_factor=0.95 * voxel_size,
-            mode="cube",
-            opacity=1.0,
-            vmin=1,
-            vmax=19, # 16
-        )
     
+        COLORS = np.array([
+            [ 22, 191, 206, 255], # 00 free
+            [214,  38,  40, 255], # 01 ceiling
+            [ 43, 160,  43, 255], # 02 floor
+            [158, 216, 229, 255], # 03 wall
+            [114, 158, 206, 255], # 04 window
+            [204, 204,  91, 255], # 05 chair
+            [255, 186, 119, 255], # 06 bed
+            [147, 102, 188, 255], # 07 sofa
+            [ 30, 119, 181, 255], # 08 table
+            [188, 188,  33, 255], # 09 tvs
+            [255, 127,  12, 255], # 10 furniture
+            [196, 175, 214, 255], # 11 objects
+            [153, 153, 153, 255], # 12 unknown
+        ]).astype(np.uint8)
         
+        occ_points = fov_voxels[:, :3]
+        occ_labels = fov_voxels[:, 3]
+        occ_colors = COLORS[occ_labels.astype(np.int32), :3].astype(np.float32) / 255.0
+        o3d_pcd = o3d.geometry.PointCloud()
+        o3d_pcd.points = o3d.utility.Vector3dVector(occ_points)
+        o3d_pcd.colors = o3d.utility.Vector3dVector(occ_colors)
+        o3d_voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(o3d_pcd, voxel_size=voxel_size)
+        #o3d.visualization.draw_geometries([o3d_voxel_grid])
 
-        colors = np.array(
-            [
-                [255, 120,  50, 255],       # floor                orange
-                [255, 192, 203, 255],       # wall                 pink
-                [255, 255,   0, 255],       # chair                yellow
-                [  0, 150, 245, 255],       # cabinet              blue
-                [  0, 255, 255, 255],       # door                 cyan
-                [0, 175,   0, 255],         # table                green
-                [255,   0,   0, 255],       # couch                red
-                [127, 127, 127, 255],       # shelf                 gray
-                [135,  60,   0, 255],       # window              brown
-                [160,  32, 240, 255],       # bed                purple                
-                [255,   0, 255, 255],       # driveable_surface    dark pink
-                [175,   0,  75, 255],       # other_flat           dark red
-                [139, 137, 137, 255],
-                [ 75,   0,  75, 255],       # sidewalk             dard purple
-                [150, 240,  80, 255],       # terrain              light green          
-                [230, 230, 250, 255],       # manmade              white
-                [  0, 175,   0, 255],       # vegetation           green
-                [  0, 255, 127, 255],       # ego car              dark cyan
-                [255,  99,  71, 255],       # ego car
-                [  0, 191, 255, 255],        # ego car              
-            ]
-        ).astype(np.uint8)
-        
-        plt_plot_fov.glyph.scale_mode = "scale_by_vector"
-        plt_plot_fov.module_manager.scalar_lut_manager.lut.table = colors
+        def save_voxelgrid_png(o3d_voxel_grid,
+                            out_path,
+                            width=1600,
+                            height=1200,
+                            bg_color=(0, 0, 0),
+                            front=(0.5, -0.5, -1.0),
+                            lookat=None,
+                            up=(0, -1, 0),
+                            zoom=0.7):
+            # 비가시 모드 창 생성
+            vis = o3d.visualization.Visualizer()
+            vis.create_window(visible=False, width=width, height=height)
+            vis.add_geometry(o3d_voxel_grid)
+
+            # 렌더 옵션
+            opt = vis.get_render_option()
+            opt.background_color = np.asarray(bg_color, dtype=np.float64)
+
+            eye    = np.array([3.2, 3.2, 6.0], dtype=np.float64)
+            lookat = np.array([3.2, 3.2, 0.0], dtype=np.float64)  # 정면(아래)으로 볼 지점
+            front  = (lookat - eye); front = front / np.linalg.norm(front)  # (0,0,-1)로 됨
+            up     = np.array([0.0, 1.0, 0.0], dtype=np.float64)  # 필요시 [0,-1,0]로 바꿔보면 느낌 달라짐
+
+            # 카메라 뷰 세팅 (대충 중앙 바라보게)
+            ctr = vis.get_view_control()
+            if lookat is None:
+                aabb = o3d_voxel_grid.get_axis_aligned_bounding_box()
+                lookat = aabb.get_center()
+            ctr.set_front(front)
+            ctr.set_up(up)
+            ctr.set_lookat(lookat)
+            ctr.set_zoom(zoom)
+
+            # 렌더 & 캡처
+            vis.poll_events()
+            vis.update_renderer()
+
+            #os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            vis.capture_screen_image(out_path, do_render=True)
+            vis.destroy_window()
+
+        # 사용 예시
+        scan_id = str(metainfo['scan_id'])  # 파일명에 쓰자
+        #out_path = f"./outputs/occ_voxel_{scan_id}.png"
+        out_path = f"occ_voxel_{scan_id}.png"
+        save_voxelgrid_png(o3d_voxel_grid, out_path)
+        print("saved ->", out_path)
 
 
-        scene = figure.scene
-        
-        scene.camera.position = [  0.75131739, -35.08337438,  16.71378558]
-        scene.camera.focal_point = [  0.75131739, -34.21734897,  16.21378558]      
-        scene.camera.view_angle = 40.0
-        scene.camera.view_up = [0., 1., 0.]
-        scene.camera.clipping_range = [0.01, 200.]
-        
-
-        #scene.camera.position = [0, 0, 50]
-        #scene.camera.focal_point = [0, 0, 0]
-        #scene.camera.view_angle = 40.0
-        #scene.camera.view_up = [0, 1, 0]
-        #scene.camera.clipping_range = [0.01, 200]
-
-        scene.camera.compute_view_plane_normal()
-        scene.render()
-        save_dir = "/mnt/data/ljn/code/EmbodiedScan/vis/slice8/"
-        scene_id = metainfo['scan_id']    
-        scene_id = scene_id.replace("/", "_")  
-        mlab.savefig(os.path.join(save_dir, f'vis_{scene_id}.png'))   
-
-        mlab.close()
-    
-    '''
 
 
 
