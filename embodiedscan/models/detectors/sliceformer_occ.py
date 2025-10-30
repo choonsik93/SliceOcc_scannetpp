@@ -208,6 +208,7 @@ class DenseSliceOccPredictor(BaseModel):
                     extrinsic = img.new_tensor(proj_mat['extrinsic'][proj_idx])
                     projection.append(intrinsic @ extrinsic)
                 proj_mat = torch.stack(projection)
+                #print(proj_mat.shape, prior_points.shape, feature.shape, self.coord_type, img_scale_factor, img_crop_offset, img.shape[-2:], img_meta['img_shape'][:2])
                 volume = batch_point_sample(
                     img_meta,
                     img_features=feature,

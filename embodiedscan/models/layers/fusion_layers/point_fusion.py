@@ -293,12 +293,25 @@ def batch_point_sample(img_meta: dict,
 
     # align_corner=True provides higher performance
     mode = 'bilinear' if aligned else 'nearest'
-    point_features = F.grid_sample(
-        img_features,
-        grid,
-        mode='bilinear',
-        padding_mode=padding_mode,
-        align_corners=align_corners)  # BxCx1xN feats
+    B, C = img_features.shape[0], img_features.shape[1]
+    N = grid.shape[2]
+    point_features = img_features.new_zeros(B, C, 1, N)
+    for b in range(B):
+        feat_b = img_features[b:b+1]
+        grid_b = grid[b:b+1]
+        out = F.grid_sample(
+                feat_b, grid_b,
+                mode='bilinear',
+                padding_mode=padding_mode,
+                align_corners=align_corners)  # 1xCx1xN feats
+        point_features[b:b+1, :, :, :] = out
+
+    # point_features = F.grid_sample(
+    #     img_features,
+    #     grid,
+    #     mode='bilinear',
+    #     padding_mode=padding_mode,
+    #     align_corners=align_corners)  # BxCx1xN feats
 
 
     if valid_flag:
