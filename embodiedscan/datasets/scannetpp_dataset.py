@@ -142,8 +142,7 @@ class ScannetppDataset(BaseDataset):
 
         info['depth2img'] = dict(extrinsic=extrinsics,
                                  intrinsic=cam2img,
-                                 origin=np.array([.0, .0,
-                                                  .5]).astype(np.float32))
+                                 origin=np.array([.0, .0, .0]).astype(np.float32))
 
         if 'depth_cam2img' not in info:
             info['depth_cam2img'] = cam2img
