@@ -255,7 +255,9 @@ class SliceOccEncoder(TransformerLayerSequence):
 
         reference_points_cams, slice_masks = [], []
         
-        ref_3ds_z = self.get_reference_points(slice_h, slice_w, 16, self.num_points_in_pillar[0], '3d', device='cpu', slice_order=slice_order[0], axis='z')
+        # ref_3ds_z = self.get_reference_points(slice_h, slice_w, 16, self.num_points_in_pillar[0], '3d', device='cpu', slice_order=slice_order[0], axis='z')
+        # Change for scannetpp, scannet++
+        ref_3ds_z = self.get_reference_points(slice_h, slice_w, slice_z // 2, self.num_points_in_pillar[0], '3d', device='cpu', slice_order=slice_order[0], axis='z')
         ref_3ds = ref_3ds_z #+ ref_3ds_h + ref_3ds_w
 
         ref_2ds_z = self.get_reference_points(slice_h, slice_w, self.pc_range[5]-self.pc_range[2], self.num_points_in_pillar[0], '2d', device='cpu', slice_order=slice_order[0], axis='z')
