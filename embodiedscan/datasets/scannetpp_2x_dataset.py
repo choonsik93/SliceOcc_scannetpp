@@ -344,7 +344,6 @@ class Scannetpp2xDataset(BaseDataset):
         metainfo = annotations['metainfo']
         raw_data_list = annotations['data_list']
 
-
         # Meta information load from annotation file will not influence the
         # existed meta information load from `BaseDataset.METAINFO` and
         # `metainfo` arguments defined in constructor.
