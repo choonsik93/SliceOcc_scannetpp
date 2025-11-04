@@ -213,8 +213,8 @@ class SliceOccEncoder(TransformerLayerSequence):
         ori_H, ori_W = img_metas[0]['ori_shape'][:2]
         reference_points_cam[..., 0] /= ori_W
         reference_points_cam[..., 1] /= ori_H
-        reference_points_cam[..., 0] /= 480
-        reference_points_cam[..., 1] /= 480
+        # reference_points_cam[..., 0] /= 480
+        # reference_points_cam[..., 1] /= 480
         
         volume_mask = (volume_mask & (reference_points_cam[..., 1:2] > 0.0)
                     & (reference_points_cam[..., 1:2] < 1.0)
