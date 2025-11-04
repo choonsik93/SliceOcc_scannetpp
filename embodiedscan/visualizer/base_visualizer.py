@@ -186,6 +186,7 @@ class EmbodiedScanBaseVisualizer(Visualizer):
         # axis_align_matrix = metainfo['axis_align_matrix']
 
         # Compute the voxels coordinates
+        gt_occupancy = data_sample.gt_occupancy.cpu().detach().numpy()
         voxels = data_sample.pred_occupancy.cpu().detach()
 
         COLORS = np.array([
@@ -206,15 +207,32 @@ class EmbodiedScanBaseVisualizer(Visualizer):
 
         nonzero_indices = np.argwhere(voxels.numpy() != 0)
         nonzero_labels = voxels.numpy()[nonzero_indices[:, 0], nonzero_indices[:, 1], nonzero_indices[:, 2]]
+        mask = nonzero_labels != 1
+        nonzero_indices = nonzero_indices[mask]
+        nonzero_labels = nonzero_labels[mask]
         occ_colors = COLORS[nonzero_labels.astype(np.int32), :3].astype(np.float32) / 255.0
         o3d_pcd = o3d.geometry.PointCloud()
         o3d_pcd.points = o3d.utility.Vector3dVector(nonzero_indices.astype(np.float32))
         o3d_pcd.colors = o3d.utility.Vector3dVector(occ_colors)
         o3d_voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(o3d_pcd, voxel_size=1)
-        #o3d_axis = o3d.geometry.TriangleMesh.create_coordinate_frame(size=40, origin=[0,0,0])
+        o3d_axis = o3d.geometry.TriangleMesh.create_coordinate_frame(size=40, origin=[0,0,0])
         #o3d.visualization.draw_geometries([o3d_voxel_grid, o3d_axis])
 
-        def save_voxelgrid_png(o3d_voxel_grid,
+        o3d_gt_pcd = o3d.geometry.PointCloud()
+        gt_label = gt_occupancy[:, 3].astype(np.int32)
+        gt_label[gt_label == 255] = 12
+        mask = gt_label != 1
+        gt_occupancy = gt_occupancy[mask]
+        gt_label = gt_label[mask]
+        gt_colors = COLORS[gt_label, :3].astype(np.float32) / 255.0
+        o3d_gt_pcd.points = o3d.utility.Vector3dVector(gt_occupancy[:, :3].astype(np.float32))
+        o3d_gt_pcd.colors = o3d.utility.Vector3dVector(gt_colors)
+        o3d_gt_voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(o3d_gt_pcd, voxel_size=1)
+        #o3d.visualization.draw_geometries([o3d_gt_voxel_grid, o3d_voxel_grid, o3d_axis])
+
+        geometry_list = [o3d_voxel_grid]
+
+        def save_voxelgrid_png(geometry_list,
                             out_path,
                             width=1600,
                             height=1200,
@@ -222,18 +240,19 @@ class EmbodiedScanBaseVisualizer(Visualizer):
                             front=(0.5, -0.5, -1.0),
                             lookat=None,
                             up=(0, -1, 0),
-                            zoom=0.7):
+                            zoom=1.0):
             # 비가시 모드 창 생성
             vis = o3d.visualization.Visualizer()
             vis.create_window(visible=False, width=width, height=height)
-            vis.add_geometry(o3d_voxel_grid)
+            for geometry in geometry_list:
+                vis.add_geometry(geometry)
 
             # 렌더 옵션
             opt = vis.get_render_option()
             opt.background_color = np.asarray(bg_color, dtype=np.float64)
 
-            eye    = np.array([20, 20, -60], dtype=np.float64)
-            lookat = np.array([20, 20, 0], dtype=np.float64)  # 정면(아래)으로 볼 지점
+            eye    = np.array([120, 120, -400], dtype=np.float64)
+            lookat = np.array([120, 120, 0], dtype=np.float64)  # 정면(아래)으로 볼 지점
             front  = (lookat - eye); front = front / np.linalg.norm(front)  # (0,0,-1)로 됨
             up     = np.array([0.0, 1.0, 0.0], dtype=np.float64)  # 필요시 [0,-1,0]로 바꿔보면 느낌 달라짐
 
@@ -259,7 +278,8 @@ class EmbodiedScanBaseVisualizer(Visualizer):
         scan_id = str(metainfo['scan_id'])  # 파일명에 쓰자
         #out_path = f"./outputs/occ_voxel_{scan_id}.png"
         out_path = f"occ_voxel_{scan_id}.png"
-        save_voxelgrid_png(o3d_voxel_grid, out_path)
+        save_voxelgrid_png(geometry_list, out_path)
+        #save_voxelgrid_png(o3d_voxel_grid, out_path)
         print("saved ->", out_path)
 
         return

@@ -8,7 +8,7 @@ n_points = 100000
 point_cloud_range = [-3.2, -3.2, -0.78, 3.2, 3.2, 1.78]
 cam_point_range = [-3.2, -3.2, -1.28, 3.2, 3.2, 1.28]
 
-    
+
 
 prior_generator = dict(type='AlignedAnchor3DRangeGenerator',
                        ranges=[[-3.2, -3.2, -1.28, 3.2, 3.2, 1.28]],

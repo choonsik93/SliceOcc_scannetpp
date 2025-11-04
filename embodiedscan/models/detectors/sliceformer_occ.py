@@ -155,7 +155,6 @@ class DenseSliceOccPredictor(BaseModel):
                 data_samples.metainfo for data_samples in batch_data_samples
             ]
 
-
         batch_size = img.shape[0]
         B, N, C, H, W = img.size()
         if len(img.shape) > 4:  # (B, n_views, C, H, W)
@@ -360,9 +359,9 @@ class DenseSliceOccPredictor(BaseModel):
         predictions = self.add_occupancy_to_data_sample(
             batch_data_samples, results_list)
 
-        # from embodiedscan.visualizer import EmbodiedScanBaseVisualizer
-        # visualizer = EmbodiedScanBaseVisualizer.get_current_instance()
-        # visualizer.visualize_occupancy(predictions)
+        from embodiedscan.visualizer import EmbodiedScanBaseVisualizer
+        visualizer = EmbodiedScanBaseVisualizer.get_current_instance()
+        visualizer.visualize_occupancy(predictions)
         
         return predictions
 

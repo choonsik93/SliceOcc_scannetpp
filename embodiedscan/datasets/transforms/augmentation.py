@@ -8,6 +8,50 @@ from embodiedscan.registry import TRANSFORMS
 
 
 @TRANSFORMS.register_module()
+class UpdateIntrinsicsAfterResize(BaseTransform):
+    """After Resize, scale only cam intrinsics/projection (K)."""
+
+    @staticmethod
+    def _get_scales(results):
+        sf = results.get('scale_factor', None)
+        if sf is not None and len(sf) >= 2:
+            return float(sf[0]), float(sf[1])
+        # fallback: ori_shape -> img_shape
+        ori_h, ori_w = results['ori_shape'][:2]
+        new_h, new_w = results['img_shape'][:2]
+        return float(new_w) / float(ori_w), float(new_h) / float(ori_h)
+
+    @staticmethod
+    def _scale_K(K: np.ndarray, sx: float, sy: float) -> np.ndarray:
+        K = np.array(K, dtype=np.float32, copy=True)
+        if K.shape[0] >= 2:  # 3x3, 3x4, 4x4 모두 커버
+            K[0, :] *= sx
+            K[1, :] *= sy
+        return K
+
+    def transform(self, results: dict) -> dict:
+        if 'cam2img' not in results:
+            return results
+        sx, sy = self._get_scales(results)
+        K = results['cam2img']
+        if isinstance(K, (list, tuple)):
+            results['cam2img'] = [self._scale_K(k, sx, sy) for k in K]
+        else:
+            results['cam2img'] = self._scale_K(K, sx, sy)
+
+        depth2img_intrinsics = results['depth2img']['intrinsic']
+        for i in range(len(depth2img_intrinsics)):
+            depth2img_intrinsics[i] = self._scale_K(
+                depth2img_intrinsics[i], sx, sy)
+        results['depth2img']['intrinsic'] = depth2img_intrinsics
+
+        return results
+
+    def __repr__(self) -> str:
+        return self.__class__.__name__ + '(scale_only_K=True)'
+    
+
+@TRANSFORMS.register_module()
 class RandomFlip3D(RandomFlip):
     """Flip the points & bbox.
 

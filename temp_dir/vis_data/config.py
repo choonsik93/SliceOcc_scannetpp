@@ -1,6 +1,6 @@
 _dim_ = 256
 _ffn_dim_ = 512
-_num_cams_ = 20
+_num_cams_ = 40
 _num_levels_ = 4
 _pos_dim_ = 128
 anchor_z_ = 40
@@ -43,8 +43,8 @@ env_cfg = dict(
     dist_cfg=dict(backend='nccl'),
     mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0))
 find_unused_parameters = True
-launcher = 'pytorch'
-load_from = None
+launcher = 'none'
+load_from = 'work_dirs/sliceocc/epoch_32.pth'
 log_level = 'INFO'
 log_processor = dict(by_epoch=True, type='LogProcessor', window_size=50)
 metainfo = dict(
@@ -339,7 +339,7 @@ model = dict(
                             tpv_z=20,
                             type='TPVMSDeformableAttention3D'),
                         embed_dims=256,
-                        num_cams=20,
+                        num_cams=40,
                         num_slices=[
                             20,
                             0,
@@ -370,7 +370,7 @@ model = dict(
                 ),
                 type='TPVFormerLayer'),
             type='SliceOccEncoder'),
-        num_cams=20,
+        num_cams=40,
         num_feature_levels=4,
         pc_range=[
             -6.0,
@@ -666,7 +666,7 @@ test_dataloader = dict(
                 with_occupancy=True,
                 with_visible_occupancy_masks=False),
             dict(
-                n_images=20,
+                n_images=40,
                 transforms=[
                     dict(backend_args=None, type='LoadImageFromFile'),
                     dict(keep_ratio=False, scale=(
@@ -675,6 +675,7 @@ test_dataloader = dict(
                     ), type='Resize'),
                 ],
                 type='MultiViewPipeline'),
+            dict(type='UpdateIntrinsicsAfterResize'),
             dict(
                 keys=[
                     'img',
@@ -697,7 +698,7 @@ test_pipeline = [
         with_occupancy=True,
         with_visible_occupancy_masks=False),
     dict(
-        n_images=20,
+        n_images=40,
         transforms=[
             dict(backend_args=None, type='LoadImageFromFile'),
             dict(keep_ratio=False, scale=(
@@ -706,6 +707,7 @@ test_pipeline = [
             ), type='Resize'),
         ],
         type='MultiViewPipeline'),
+    dict(type='UpdateIntrinsicsAfterResize'),
     dict(
         keys=[
             'img',
@@ -760,7 +762,7 @@ train_dataloader = dict(
                 with_occupancy=True,
                 with_visible_occupancy_masks=False),
             dict(
-                n_images=20,
+                n_images=40,
                 transforms=[
                     dict(backend_args=None, type='LoadImageFromFile'),
                     dict(keep_ratio=False, scale=(
@@ -769,6 +771,7 @@ train_dataloader = dict(
                     ), type='Resize'),
                 ],
                 type='MultiViewPipeline'),
+            dict(type='UpdateIntrinsicsAfterResize'),
             dict(
                 keys=[
                     'img',
@@ -789,7 +792,7 @@ train_pipeline = [
         with_occupancy=True,
         with_visible_occupancy_masks=False),
     dict(
-        n_images=20,
+        n_images=40,
         transforms=[
             dict(backend_args=None, type='LoadImageFromFile'),
             dict(keep_ratio=False, scale=(
@@ -798,6 +801,7 @@ train_pipeline = [
             ), type='Resize'),
         ],
         type='MultiViewPipeline'),
+    dict(type='UpdateIntrinsicsAfterResize'),
     dict(
         keys=[
             'img',
@@ -849,7 +853,7 @@ val_dataloader = dict(
                 with_occupancy=True,
                 with_visible_occupancy_masks=False),
             dict(
-                n_images=20,
+                n_images=40,
                 transforms=[
                     dict(backend_args=None, type='LoadImageFromFile'),
                     dict(keep_ratio=False, scale=(
@@ -858,6 +862,7 @@ val_dataloader = dict(
                     ), type='Resize'),
                 ],
                 type='MultiViewPipeline'),
+            dict(type='UpdateIntrinsicsAfterResize'),
             dict(
                 keys=[
                     'img',
@@ -880,4 +885,4 @@ visualizer = dict(
     vis_backends=[
         dict(type='LocalVisBackend'),
     ])
-work_dir = 'work_dirs/sliceocc'
+work_dir = './work_dirs/mv-occ_8xb1_sliceformer-occ2x-11class'
