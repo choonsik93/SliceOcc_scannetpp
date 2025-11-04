@@ -1,6 +1,6 @@
 _dim_ = 256
 _ffn_dim_ = 512
-_num_cams_ = 40
+_num_cams_ = 20
 _num_levels_ = 4
 _pos_dim_ = 128
 anchor_z_ = 40
@@ -339,7 +339,7 @@ model = dict(
                             tpv_z=20,
                             type='TPVMSDeformableAttention3D'),
                         embed_dims=256,
-                        num_cams=40,
+                        num_cams=20,
                         num_slices=[
                             20,
                             0,
@@ -370,7 +370,7 @@ model = dict(
                 ),
                 type='TPVFormerLayer'),
             type='SliceOccEncoder'),
-        num_cams=40,
+        num_cams=20,
         num_feature_levels=4,
         pc_range=[
             -6.0,
@@ -666,7 +666,7 @@ test_dataloader = dict(
                 with_occupancy=True,
                 with_visible_occupancy_masks=False),
             dict(
-                n_images=40,
+                n_images=20,
                 transforms=[
                     dict(backend_args=None, type='LoadImageFromFile'),
                     dict(keep_ratio=False, scale=(
@@ -675,7 +675,6 @@ test_dataloader = dict(
                     ), type='Resize'),
                 ],
                 type='MultiViewPipeline'),
-            dict(type='UpdateIntrinsicsAfterResize'),
             dict(
                 keys=[
                     'img',
@@ -698,7 +697,7 @@ test_pipeline = [
         with_occupancy=True,
         with_visible_occupancy_masks=False),
     dict(
-        n_images=40,
+        n_images=20,
         transforms=[
             dict(backend_args=None, type='LoadImageFromFile'),
             dict(keep_ratio=False, scale=(
@@ -707,7 +706,6 @@ test_pipeline = [
             ), type='Resize'),
         ],
         type='MultiViewPipeline'),
-    dict(type='UpdateIntrinsicsAfterResize'),
     dict(
         keys=[
             'img',
@@ -762,7 +760,7 @@ train_dataloader = dict(
                 with_occupancy=True,
                 with_visible_occupancy_masks=False),
             dict(
-                n_images=40,
+                n_images=20,
                 transforms=[
                     dict(backend_args=None, type='LoadImageFromFile'),
                     dict(keep_ratio=False, scale=(
@@ -771,7 +769,6 @@ train_dataloader = dict(
                     ), type='Resize'),
                 ],
                 type='MultiViewPipeline'),
-            dict(type='UpdateIntrinsicsAfterResize'),
             dict(
                 keys=[
                     'img',
@@ -792,7 +789,7 @@ train_pipeline = [
         with_occupancy=True,
         with_visible_occupancy_masks=False),
     dict(
-        n_images=40,
+        n_images=20,
         transforms=[
             dict(backend_args=None, type='LoadImageFromFile'),
             dict(keep_ratio=False, scale=(
@@ -801,7 +798,6 @@ train_pipeline = [
             ), type='Resize'),
         ],
         type='MultiViewPipeline'),
-    dict(type='UpdateIntrinsicsAfterResize'),
     dict(
         keys=[
             'img',
@@ -853,7 +849,7 @@ val_dataloader = dict(
                 with_occupancy=True,
                 with_visible_occupancy_masks=False),
             dict(
-                n_images=40,
+                n_images=20,
                 transforms=[
                     dict(backend_args=None, type='LoadImageFromFile'),
                     dict(keep_ratio=False, scale=(
@@ -862,7 +858,6 @@ val_dataloader = dict(
                     ), type='Resize'),
                 ],
                 type='MultiViewPipeline'),
-            dict(type='UpdateIntrinsicsAfterResize'),
             dict(
                 keys=[
                     'img',

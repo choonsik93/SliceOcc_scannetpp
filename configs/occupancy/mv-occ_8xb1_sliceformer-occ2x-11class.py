@@ -21,7 +21,7 @@ _dim_ = 256
 _pos_dim_ = _dim_//2
 _ffn_dim_ = _dim_*2
 _num_levels_ = 4
-_num_cams_ = 40
+_num_cams_ = 20
 tpv_h_ = 60
 tpv_w_ = 60
 tpv_z_ = 20
@@ -177,7 +177,7 @@ train_pipeline = [
             dict(type='LoadImageFromFile', backend_args=backend_args),
             dict(type='Resize', scale=(480, 480), keep_ratio=False),
         ]),
-    dict(type='UpdateIntrinsicsAfterResize'),
+    #dict(type='UpdateIntrinsicsAfterResize'),
     dict(type='Pack3DDetInputs', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d', 'gt_occupancy'])
 ]
 
@@ -192,7 +192,7 @@ test_pipeline = [
             dict(type='LoadImageFromFile', backend_args=backend_args),
             dict(type='Resize', scale=(480, 480), keep_ratio=False),
         ]),
-    dict(type='UpdateIntrinsicsAfterResize'),
+    #dict(type='UpdateIntrinsicsAfterResize'),
     dict(type='Pack3DDetInputs', keys=['img', 'gt_bboxes_3d', 'gt_labels_3d', 'gt_occupancy'])
 ]
 
